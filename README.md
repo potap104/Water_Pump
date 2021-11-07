@@ -7,5 +7,8 @@ Smart Zigbee Water Pump
 
 Ссылки на проект:
 Github: https://github.com/potap104/Water_Pump/tree/master
+
 YouTube: https://www.youtube.com/watch?v=jVlNeC93PPE
+
 Руководство пользователя: https://disk.yandex.ru/i/prz1MkgoK8klCQ
+
