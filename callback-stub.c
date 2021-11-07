@@ -2389,6 +2389,22 @@ void emberAfSetTimeCallback(uint32_t utcTime)
 {
 }
 
+/** @brief On/off Cluster Set Value
+ *
+ * This function is called when the on/off value needs to be set, either through
+ * normal channels or as a result of a level change.
+ *
+ * @param endpoint   Ver.: always
+ * @param command   Ver.: always
+ * @param initiatedByLevelChange   Ver.: always
+ */
+EmberAfStatus emberAfOnOffClusterSetValueCallback(uint8_t endpoint,
+                                                  uint8_t command,
+                                                  bool initiatedByLevelChange)
+{
+  return EMBER_ZCL_STATUS_UNSUP_COMMAND;
+}
+
 /** @brief Stack Status
  *
  * This function is called by the application framework from the stack status

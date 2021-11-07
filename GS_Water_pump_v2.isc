@@ -334,7 +334,6 @@ callbacks:emberAfLevelControlClusterMoveToLevelCallback
 callbacks:emberAfOnOffClusterOffCallback
 callbacks:emberAfOnOffClusterOnCallback
 callbacks:emberAfOnOffClusterToggleCallback
-callbacks:emberAfOnOffClusterSetValueCallback
 }
 {setupId:zclCustomizer
 }

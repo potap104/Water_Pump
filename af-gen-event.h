@@ -84,7 +84,7 @@
   "Identify Cluster Server EP 1",  \
   "A d c_event data",  \
   "Delay event data",  \
-  "Event data",  \
+  "Led blink_event data",  \
   "Timer modevent data",  \
   "Button Interface Plugin Button0Pressed",  \
   "Button Interface Plugin Button0Released",  \

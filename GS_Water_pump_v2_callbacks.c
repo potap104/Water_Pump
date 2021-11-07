@@ -34,12 +34,14 @@ RESET,
 static uint8_t mode_flag = 0;
 
 #define DELAY_IN_MS 1000
-static int PumpDelay = 3;               // Время работы насоса
-static uint8_t TimerPumpDelay = 60;     // Таймер включения
+static int PumpDelay = 10;               // Время работы насоса
+static uint8_t TimerPumpDelay = 60;     // Таймер включения/Таймер датчика
 static uint8_t MaxTimerPumpDelay = 255;
-static uint8_t MinTimerPumpDelay = 60;
-static int ADC_Delay = 100;             // Таймер датчика
+static uint8_t MinTimerPumpDelay = 10;
+//static int ADC_Delay = 100;             // Таймер датчика
 static int Porog = 40;                  // Пороговое значение датчика
+static int blinks = 0;
+static int blink_flag = 0;
 
 
 // Инициализация АЦП
@@ -55,7 +57,7 @@ void Get_ADC_Data(){
   while((ADC_IntGet(ADC0) & ADC_IF_SINGLE) != ADC_IF_SINGLE);
   adcData = ADC_DataSingleGet(ADC0);
   adcData = 100-(((adcData-2048)/10)*1.5);
-  emberAfCorePrintln("Humidity: %d%% \r\n",adcData);
+  //emberAfCorePrintln("Humidity: %d%% \r\n",adcData);
   attr_data = adcData;
   emberAfWriteServerAttribute(1,level_Clus,adcData_attr,&attr_data,1);
   CMU_ClockEnable( cmuClock_ADC0, false);
@@ -64,16 +66,23 @@ void Get_ADC_Data(){
 void Mode_changing(){
   // Запись режима в атрибут
   mode_flag++;
-  emberAfWriteServerAttribute(1,flow_Clus,mode_attr,&mode_flag,1);
   switch (mode_flag)
     {
     // Ручной режим
     case DO_NOTHING:
+      emberAfWriteServerAttribute(1,flow_Clus,mode_attr,&mode_flag,1);
+
+      blink_flag = 2;
+      emberEventControlSetDelayMS(LedBlink_eventData,500);
       break;
 
     // Полив по таймеру
     case TIMER_MODE:
+      emberAfWriteServerAttribute(1,flow_Clus,mode_attr,&mode_flag,1);
       emberEventControlSetDelayMS(TimerModeventData, TimerPumpDelay*DELAY_IN_MS);
+
+      blink_flag = 3;
+      emberEventControlSetDelayMS(LedBlink_eventData,500);
           break;
 
     // Полив по датчику
@@ -81,7 +90,11 @@ void Mode_changing(){
       emberEventControlSetInactive(TimerModeventData);
       emberEventControlSetInactive(DelayEventData);
       GPIO_PinModeSet(gpioPortA,8,gpioModePushPull,0);
-      emberEventControlSetDelayMS(ADC_eventData, ADC_Delay*DELAY_IN_MS);
+      emberAfWriteServerAttribute(1,flow_Clus,mode_attr,&mode_flag,1);
+      emberEventControlSetDelayMS(ADC_eventData, TimerPumpDelay*DELAY_IN_MS);
+
+      blink_flag = 1;
+      emberEventControlSetDelayMS(LedBlink_eventData,500);
           break;
 
     // Возврат к ручному режиму
@@ -91,23 +104,63 @@ void Mode_changing(){
       emberEventControlSetInactive(ADC_eventData);
       GPIO_PinModeSet(gpioPortA,8,gpioModePushPull,0);
       mode_flag = 0;
+      emberAfWriteServerAttribute(1,flow_Clus,mode_attr,&mode_flag,1);
+
+      blink_flag = 2;
+      emberEventControlSetDelayMS(LedBlink_eventData,500);
           break;
     }
 }
 
-int i = 0;
+// Индикация
 void LedBlink_eventHandler(void)
 {
-  if (i<6){
-  emberEventControlSetInactive(LedBlink_eventData);
-  GPIO_PinOutToggle(gpioPortC,10);
-  emberEventControlSetDelayMS(LedBlink_eventData,500);
-  i++;
-  }
-  else{
-  i = 0;
-  GPIO_PinModeSet(gpioPortC,10,gpioModePushPull,0);
-  emberEventControlSetInactive(LedBlink_eventData);
+  switch(blink_flag){
+
+    case 1:
+      if (blinks<6){
+      emberEventControlSetInactive(LedBlink_eventData);
+      GPIO_PinOutToggle(gpioPortF,6);
+      emberEventControlSetDelayMS(LedBlink_eventData,500);
+      blinks++;
+      }
+      else{
+      blinks = 0;
+      GPIO_PinModeSet(gpioPortF,6,gpioModePushPull,0);
+      emberEventControlSetInactive(LedBlink_eventData);
+      blink_flag = 0;
+      }
+      break;
+
+    case 2:
+      if (blinks<2){
+      emberEventControlSetInactive(LedBlink_eventData);
+      GPIO_PinOutToggle(gpioPortF,6);
+      emberEventControlSetDelayMS(LedBlink_eventData,500);
+      blinks++;
+      }
+      else{
+      blinks = 0;
+      GPIO_PinModeSet(gpioPortF,6,gpioModePushPull,0);
+      emberEventControlSetInactive(LedBlink_eventData);
+      blink_flag = 0;
+      }
+      break;
+
+    case 3:
+      if (blinks<4){
+      emberEventControlSetInactive(LedBlink_eventData);
+      GPIO_PinOutToggle(gpioPortF,6);
+      emberEventControlSetDelayMS(LedBlink_eventData,500);
+      blinks++;
+      }
+      else{
+      blinks = 0;
+      GPIO_PinModeSet(gpioPortF,6,gpioModePushPull,0);
+      emberEventControlSetInactive(LedBlink_eventData);
+      blink_flag = 0;
+      }
+      break;
   }
 }
 
@@ -137,7 +190,7 @@ void ADC_eventHandler(void)
       emberEventControlSetDelayMS(DelayEventData, PumpDelay*DELAY_IN_MS);
       GPIO_PinModeSet(gpioPortA,8,gpioModePushPull,1);
   }
-  emberEventControlSetDelayMS(ADC_eventData, ADC_Delay*DELAY_IN_MS);
+  emberEventControlSetDelayMS(ADC_eventData, TimerPumpDelay*DELAY_IN_MS);
 }
 
 
@@ -148,12 +201,12 @@ void emberAfMainInitCallback(void)
   reset_flag = GPIO_PinInGet(gpioPortD,14);
   if (reset_flag == 0){
     emberLeaveNetwork();
-    emberAfAppPrintln("reset %d", reset_flag);
+    //emberAfAppPrintln("reset %d", reset_flag);
   }
 
   GPIO_PinModeSet(gpioPortA,6,gpioModeInput,0);     // Вход датчика
   GPIO_PinModeSet(gpioPortA,8,gpioModePushPull,0);  // насос выкл
-  GPIO_PinModeSet(gpioPortC,10,gpioModePushPull,0); // диод выкл
+  GPIO_PinModeSet(gpioPortF,6,gpioModePushPull,0); // диод выкл
 
   // Настройка АЦП
   initSingle.reference =  adcRef5V;
@@ -166,22 +219,28 @@ void emberAfMainInitCallback(void)
 // При длительном нажатии подключаться к сети
 void emberAfPluginButtonInterfaceButton0PressedLongCallback(uint16_t timePressedMs,bool pressedAtReset)
 {
+  blink_flag = 1;
+  // Если уже подключен, помигать диодом
   if (emberAfNetworkState() == EMBER_JOINED_NETWORK){
-      GPIO_PinModeSet(gpioPortC,10,gpioModePushPull,1);
+      GPIO_PinModeSet(gpioPortF,6,gpioModePushPull,1);
       emberEventControlSetDelayMS(LedBlink_eventData,500);
   }
   else {
+      // если нет, включить диод, запустить подключение
       emberAfPluginNetworkSteeringStart();
-      GPIO_PinModeSet(gpioPortC,10,gpioModePushPull,1);
+      GPIO_PinModeSet(gpioPortF,6,gpioModePushPull,1);
   }
 }
 // Индикация подключения
 void emberAfPluginNetworkSteeringCompleteCallback(EmberStatus status,uint8_t totalBeacons,uint8_t joinAttempts,uint8_t finalState)
 {
+  // Если не подключился, погасить диод
   if (status != EMBER_SUCCESS){
-  GPIO_PinModeSet(gpioPortC,10,gpioModePushPull,0);
+  GPIO_PinModeSet(gpioPortF,6,gpioModePushPull,0);
   }
+  // Если подлючился, помигать диодом
   else{
+  blink_flag = 1;
   emberEventControlSetDelayMS(LedBlink_eventData,500);
 
   }
@@ -219,12 +278,13 @@ boolean emberAfLevelControlClusterMoveToLevelCallback(int8u level,int16u transit
 void emberAfPluginButtonInterfaceButton1PressedLongCallback(uint16_t timePressedMs,bool pressedAtReset)
 {
   // Проверка датчика влажности
-  Get_ADC_Data();
+  //Get_ADC_Data();
   emberEventControlSetDelayMS(DelayEventData, PumpDelay*DELAY_IN_MS);
-  if(adcData<Porog){
+  GPIO_PinModeSet(gpioPortA,8,gpioModePushPull,1);
+  /*if(adcData<Porog){
     emberEventControlSetDelayMS(DelayEventData, PumpDelay*DELAY_IN_MS);
     GPIO_PinModeSet(gpioPortA,8,gpioModePushPull,1);
-  }
+  }*/
 }
 
 // Одиночный полив командой
@@ -253,13 +313,6 @@ void emberAfPluginButtonInterfaceButton0PressedShortCallback(uint16_t timePresse
 // Смена режимов работы командой
 boolean emberAfOnOffClusterToggleCallback(void)
 {
-  Get_ADC_Data();
   Mode_changing();
   return FALSE;
 }
-
-EmberAfStatus emberAfOnOffClusterSetValueCallback(int8u endpoint,int8u command,boolean initiatedByLevelChange)
-{
-  return EMBER_ZCL_STATUS_UNSUP_COMMAND;
-}
-

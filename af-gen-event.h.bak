@@ -12,6 +12,7 @@
   EmberEventControl emberAfIdentifyClusterServerTickCallbackControl1; \
   extern EmberEventControl ADC_eventData; \
   extern EmberEventControl DelayEventData; \
+  extern EmberEventControl LedBlink_eventData; \
   extern EmberEventControl TimerModeventData; \
   extern EmberEventControl emberAfPluginButtonInterfaceButton0PressedEventControl; \
   extern EmberEventControl emberAfPluginButtonInterfaceButton0ReleasedEventControl; \
@@ -23,6 +24,7 @@
   extern EmberEventControl emberAfPluginUpdateTcLinkKeyBeginTcLinkKeyUpdateEventControl; \
   extern void ADC_eventHandler(void); \
   extern void DelayEventHandler(void); \
+  extern void LedBlink_eventHandler(void); \
   extern void TimerModeventHandler(void); \
   extern void emberAfPluginButtonInterfaceButton0PressedEventHandler(void); \
   extern void emberAfPluginButtonInterfaceButton0ReleasedEventHandler(void); \
@@ -63,6 +65,7 @@
   { &emberAfIdentifyClusterServerTickCallbackControl1, emberAfIdentifyClusterServerTickCallbackWrapperFunction1 }, \
   { &ADC_eventData, ADC_eventHandler }, \
   { &DelayEventData, DelayEventHandler }, \
+  { &LedBlink_eventData, LedBlink_eventHandler }, \
   { &TimerModeventData, TimerModeventHandler }, \
   { &emberAfPluginButtonInterfaceButton0PressedEventControl, emberAfPluginButtonInterfaceButton0PressedEventHandler }, \
   { &emberAfPluginButtonInterfaceButton0ReleasedEventControl, emberAfPluginButtonInterfaceButton0ReleasedEventHandler }, \
@@ -81,6 +84,7 @@
   "Identify Cluster Server EP 1",  \
   "A d c_event data",  \
   "Delay event data",  \
+  "Event data",  \
   "Timer modevent data",  \
   "Button Interface Plugin Button0Pressed",  \
   "Button Interface Plugin Button0Released",  \

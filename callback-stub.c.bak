@@ -677,6 +677,20 @@ bool emberAfKeyEstablishmentCallback(EmberAfKeyEstablishmentNotifyMessage status
   return true;
 }
 
+/** @brief On/off Cluster Level Control Effect
+ *
+ * This is called by the framework when the on/off cluster initiates a command
+ * that must effect a level control change. The implementation assumes that the
+ * client will handle any effect on the On/Off Cluster.
+ *
+ * @param endpoint   Ver.: always
+ * @param newValue   Ver.: always
+ */
+void emberAfOnOffClusterLevelControlEffectCallback(uint8_t endpoint,
+                                                   bool newValue)
+{
+}
+
 /** @brief Main Start
  *
  * This function is called at the start of main after the HAL has been
@@ -1631,6 +1645,23 @@ void emberAfPluginEndDeviceSupportPollCompletedCallback(EmberStatus status)
 bool emberAfPluginEndDeviceSupportPreNetworkMoveCallback(void)
 {
   return false;
+}
+
+/** @brief Network Found
+ *
+ * This is called by the form-and-join library to notify the application of the
+ * network found after a call to ::emberScanForJoinableNetwork() or
+ * ::emberScanForNextJoinableNetwork(). See form-and-join documentation for
+ * more information.
+ *
+ * @param networkFound   Ver.: always
+ * @param lqi   Ver.: always
+ * @param rssi   Ver.: always
+ */
+void emberAfPluginFormAndJoinNetworkFoundCallback(EmberZigbeeNetwork *networkFound,
+                                                  uint8_t lqi,
+                                                  int8_t rssi)
+{
 }
 
 /** @brief Unused Pan Id Found
